@@ -1,0 +1,138 @@
+<?php
+
+return [
+    'label' => 'Бүтээгдэхүүн',
+    'plural_label' => 'Бүтээгдэхүүнүүд',
+    'tabs' => [
+        'all' => 'Бүгд',
+        'published' => 'Нийтлэгдсэн',
+        'draft' => 'Ноорог',
+    ],
+    'status' => [
+        'draft' => [
+            'content' => 'Currently in draft, this product is hidden from all channels and customer groups.',
+        ],
+        'archived' => [
+            'content' => 'This product is archived — it is hidden from the storefront, but kept on record so historical orders keep their reference. Move it back to Draft to revive it.',
+        ],
+        'availability' => [
+            'customer_groups' => 'Энэ бүтээгдэхүүн одоогоор бүх харилцагчийн бүлгүүдэд боломжгүй байна.',
+            'channels' => 'Энэ бүтээгдэхүүн одоогоор бүх сувгууд боломжгүй байна.',
+            'hidden_from_guests' => 'Зочид одоогоор энэ бүтээгдэхүүнийг харах эсвэл худалдаж авах боломжгүй байна. Үндсэн харилцагчийн бүлэг идэвхгүй буюу үзэгдэхгүй байна.',
+            'no_default_customer_group' => 'Үндсэн харилцагчийн бүлэг тохируулагдаагүй тул зочдын харагдах байдлыг эндээс удирдах боломжгүй. Зочдын хандалтыг хянахын тулд нэг харилцагчийн бүлгийг үндсэн гэж тэмдэглэнэ үү.',
+        ],
+    ],
+    'table' => [
+        'status' => [
+            'label' => 'Статус',
+            'states' => [
+                'archived' => 'Archived',
+                'deleted' => 'Устгасан',
+                'draft' => 'Ноорог',
+                'published' => 'Нийтлэгдсэн',
+            ],
+        ],
+        'name' => [
+            'label' => 'Нэр',
+        ],
+        'brand' => [
+            'label' => 'Бренд',
+        ],
+        'sku' => [
+            'label' => 'SKU',
+        ],
+        'stock' => [
+            'label' => 'Нөөц',
+        ],
+        'producttype' => [
+            'label' => 'Бүтээгдэхүүний төрөл',
+        ],
+    ],
+    'actions' => [
+        'edit_status' => [
+            'label' => 'Статус шинэчлэх',
+            'heading' => 'Статус шинэчлэх',
+        ],
+    ],
+    'form' => [
+
+        'description' => [
+            'label' => 'Description',
+        ],
+
+        'short_description' => [
+            'label' => 'Short Description',
+        ],
+        'name' => [
+            'label' => 'Нэр',
+        ],
+        'brand' => [
+            'label' => 'Бренд',
+        ],
+        'sku' => [
+            'label' => 'SKU',
+        ],
+        'producttype' => [
+            'label' => 'Бүтээгдэхүүний төрөл',
+        ],
+        'status' => [
+            'label' => 'Статус',
+            'options' => [
+                'published' => [
+                    'label' => 'Нийтлэгдсэн',
+                    'description' => 'Энэ бүтээгдэхүүн бүх идэвхтэй харилцагчийн бүлгүүд болон сувгуудад боломжтой болно',
+                ],
+                'draft' => [
+                    'label' => 'Ноорог',
+                    'description' => 'Энэ бүтээгдэхүүн бүх сувгууд болон харилцагчийн бүлгүүдэд нуугдсан байна',
+                ],
+            ],
+        ],
+        'tags' => [
+            'label' => 'Таг',
+            'helper_text' => 'Тагыг Enter, Tab эсвэл таслал (,) дарж тусгаарлана уу',
+        ],
+        'collections' => [
+            'label' => 'Коллекцүүд',
+            'select_collection' => 'Коллекц сонгох',
+        ],
+    ],
+    'pages' => [
+        'availability' => [
+            'label' => 'Бэлэн',
+        ],
+        'edit' => [
+            'title' => 'Үндсэн мэдээлэл',
+        ],
+        'identifiers' => [
+            'label' => 'Бүтээгдэхүүний таниулагчид',
+        ],
+        'inventory' => [
+            'label' => 'Инвентарь',
+        ],
+        'pricing' => [
+            'form' => [
+                'tax_class_id' => [
+                    'label' => 'Татварын ангилал',
+                ],
+                'tax_ref' => [
+                    'label' => 'Татварын лавлагаа',
+                    'helper_text' => 'Сонголттой, 3-р талын системүүдтэй интеграцид зориулагдсан.',
+                ],
+            ],
+        ],
+        'shipping' => [
+            'label' => 'Хүргэлт',
+        ],
+        'variants' => [
+            'label' => 'Вариантүүд',
+        ],
+        'collections' => [
+            'label' => 'Коллекцүүд',
+            'select_collection' => 'Коллекц сонгох',
+        ],
+        'associations' => [
+            'label' => 'Бүтээгдэхүүний холбоосууд',
+        ],
+    ],
+];
