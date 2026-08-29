@@ -178,7 +178,7 @@ use Lunar\Filament\Forms\Components\Support\RecordSearch;
 $results = RecordSearch::for(Product::class, $search)->take(20)->get();
 ```
 
-It prefers Laravel Scout when both `lunar.panel.scout_enabled` is true and the model uses Scout's `Searchable` trait, falls back to a translated-attribute DB search, and falls back again to a plain `name` column search for models that have neither.
+It prefers Laravel Scout when both `lunar.filament.scout_enabled` is true and the model uses Scout's `Searchable` trait, falls back to a translated-attribute DB search, and falls back again to a plain `name` column search for models that have neither.
 
 ---
 
@@ -187,6 +187,8 @@ It prefers Laravel Scout when both `lunar.panel.scout_enabled` is true and the m
 ### `Attributes` — the Lunar attribute editor
 
 Renders editable fields for every attribute attached to the current model (Product, Brand, Collection, etc.) according to its registered field type. Each field type knows how to draw itself, cast its data, and synthesize across Livewire.
+
+An attribute's `validation_rules` (a list of Laravel rule strings, editable on the attribute form — spec 0062) are applied to the rendered field on top of the `required` flag, so `['min:2', 'max:10']` on a text attribute validates exactly as those rules would on any form input.
 
 ```php
 use Lunar\Filament\Forms\Components\Attributes;
@@ -296,7 +298,7 @@ $schema->components([
 ]);
 ```
 
-Models with a complete schema, table, infolist, and relation managers: `Activity`, `AttributeGroup`, `Brand`, `Channel`, `Collection`, `CollectionGroup`, `Currency`, `Customer`, `CustomerGroup`, `Discount`, `Language`, `Order`, `Product`, `ProductOption`, `ProductType`, `ProductVariant`, `Staff`, `Tag`, `TaxClass`, `TaxRate`, `TaxZone`.
+Models with a complete schema, table, infolist, and relation managers: `Activity`, `Attribute`, `AttributeGroup`, `Brand`, `Channel`, `Collection`, `CollectionGroup`, `Currency`, `Customer`, `CustomerGroup`, `Discount`, `Language`, `Order`, `Product`, `ProductOption`, `ProductType`, `ProductVariant`, `Staff`, `Tag`, `TaxClass`, `TaxRate`, `TaxZone`.
 
 ---
 
@@ -318,6 +320,8 @@ First-class Filament `Action` / `BulkAction` classes for every commerce verb the
 | `Products\AdjustStockAction` | `Core\Actions\Products\AdjustStock` | Variant row |
 | `Collections\CreateRootCollectionAction` / `CreateChildCollectionAction` | `Core\Actions\Collections\CreateRootCollection` / `CreateChildCollection` | Collection tree view |
 | `Collections\MoveCollectionAction` / `DeleteCollectionAction` | `Core\Actions\Collections\MoveCollection` / `DeleteCollection` | Collection tree view |
+| `Attributes\CreateAttributeAction` / `EditAttributeAction` | `Core\Actions\Attributes\CreateAttribute` / `UpdateAttribute` | Attribute table / attribute group relation manager (on a relation manager the owner group supplies `attribute_group_id`) |
+| `Attributes\DeleteAttributeAction` / `DeleteAttributesBulkAction` | `Core\Actions\Attributes\DeleteAttribute` | Attribute row / bulk — system attributes are protected |
 
 Drop into any header/row/bulk action array — they work like any Filament action:
 
@@ -375,7 +379,7 @@ class MyProductResource extends Resource
 }
 ```
 
-The trait forwards `getGloballySearchableAttributes`, `getGlobalSearchResultTitle`, `getGlobalSearchResultDetails`, and `getGlobalSearchEloquentQuery` to the descriptor, and routes the actual constraint-building through `RecordSearch` — the same Scout-vs-translated-attribute backend the entity selectors use. Scout is used when `lunar.panel.scout_enabled=true` and the model uses `Laravel\Scout\Searchable`; otherwise the query falls back to LIKE-matching across the resource's attribute list plus any searchable `TranslatedText` attributes.
+The trait forwards `getGloballySearchableAttributes`, `getGlobalSearchResultTitle`, `getGlobalSearchResultDetails`, and `getGlobalSearchEloquentQuery` to the descriptor, and routes the actual constraint-building through `RecordSearch` — the same Scout-vs-translated-attribute backend the entity selectors use. Scout is used when `lunar.filament.scout_enabled=true` and the model uses `Laravel\Scout\Searchable`; otherwise the query falls back to LIKE-matching across the resource's attribute list plus any searchable `TranslatedText` attributes.
 
 `getGlobalSearchResultUrl` stays on the resource — only the resource knows its own URL.
 
@@ -411,16 +415,17 @@ return $panel->widgets([
 
 Also available: `Lunar\Filament\Widgets\Customer\CustomerStatsOverviewWidget`, `Lunar\Filament\Widgets\Collections\CollectionTreeView`, `Lunar\Filament\Widgets\Products\ProductOptionsWidget`, `Lunar\Filament\Widgets\Products\VariantSwitcherTable`.
 
-Widgets that link to Lunar records (e.g. "click an order in this table") use a record-URL resolver. Wire it up to your own resources in your panel provider:
+Widgets and tables that link to Lunar records (e.g. "click an order in this table") resolve the target page through `lunar.filament.record_urls.{key}`. Point each key at your own panel's pages in `config/lunar/filament.php`:
 
 ```php
-use Lunar\Filament\Support\Facades\RecordUrls;
-
-RecordUrls::resolveUsing('order', fn ($order) => MyOrderResource::getUrl('view', ['record' => $order]));
-RecordUrls::resolveUsing('product_variant', fn ($variant) => MyProductResource::getUrl('edit', ['record' => $variant->product]));
+'record_urls' => [
+    'order' => ManageOrder::class,                            // ManageOrder::getUrl(['record' => $record])
+    'product_variant' => [MyProductResource::class, 'edit'],  // MyProductResource::getUrl('edit', ['record' => $record])
+    'collection_edit' => null,                                // omit the link
+],
 ```
 
-When no resolver is registered, the widget gracefully omits the link.
+Prefer the class-string forms: config has to survive `php artisan config:cache`, and a closure anywhere in the tree makes the whole application's config non-serializable. A callable — invoked as `$resolver($record, $context)` — is still accepted for a resolver that genuinely can't be expressed as a class and a page name, at the cost of config caching. When a key is `null` or unset, the component gracefully omits the link. The `lunarphp/admin` shell wires all three keys to its own pages at boot.
 
 ---
 
@@ -442,6 +447,20 @@ class ColorPicker extends BaseFieldType
 
 AttributeData::registerFieldType(ColorPicker::class);
 ```
+
+### Field type configuration forms
+
+The "configure this attribute" form (min/max, dropdown options, richtext toggle, …) is built
+from the **core** field type's renderer-agnostic descriptors — `FieldType::getConfigurationFields()`
+on `Lunar\Core\FieldTypes\*` — mapped onto Filament components by
+`Lunar\Filament\Support\Forms\ConfigurationFieldMapper`. A custom field type registered with
+core's `FieldTypeManifest` therefore gets a working configuration form here (and in the Inertia
+panel) without any bridge code: declare descriptors (`text`, `number`, `toggle`, `select`,
+`tags`, `lookups`) and validation via `getConfig()`.
+
+To replace the derived form with bespoke Filament components, override
+`getConfigurationFields()` on your `BaseFieldType` subclass — a non-empty return wins over the
+descriptor mapping.
 
 ---
 
@@ -502,7 +521,7 @@ $this->app->bind(
 php artisan vendor:publish --tag=lunar-filament.schemas
 ```
 
-Copies every schema, table, infolist, and relation manager into `app/Filament/…` (configurable in `config/lunar-filament.php` → `publish_path`). The runtime resolver prefers your published copy when both exist.
+Copies every schema, table, infolist, and relation manager into `app/Filament/…` (configurable in `config/lunar/filament.php` → `publish_path`). The runtime resolver prefers your published copy when both exist.
 
 You can also publish:
 
@@ -516,12 +535,15 @@ php artisan vendor:publish --tag=lunar-filament.views     # blade views
 
 ## Configuration
 
-Publish and tweak `config/lunar-filament.php` to change:
+Publish and tweak `config/lunar/filament.php` to change:
 
 - `publish_path` — where stub publication writes files (default: `app/Filament`).
 - `resolver.prefer_published` — runtime preference between published and bridge classes.
 - `register_widgets_on_default_panel` — opt-in auto-registration of the dashboard widgets (off by default for downstream-panel installs).
 - `record_url_resolvers` — closures that map a record + key to a URL inside your panel.
+- `enable_variants` — whether the variants manager shows when editing a product (default: `true`).
+- `pdf_rendering` — `'download'` or `'stream'`, controlling how PDFs are handled when browsing the resource (default: `'download'`).
+- `scout_enabled` — whether to prefer Laravel Scout over the translated-attribute DB search on supported models (default: `false`).
 
 ---
 

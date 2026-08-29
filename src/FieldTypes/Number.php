@@ -4,7 +4,6 @@ namespace Lunar\Filament\FieldTypes;
 
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Components\Component;
-use Filament\Schemas\Components\Grid;
 use Lunar\Core\Models\Attribute;
 use Lunar\Filament\Synthesizers\NumberSynth;
 
@@ -19,7 +18,7 @@ class Number extends BaseFieldType
 
         $input = TextInput::make($attribute->handle)
             ->numeric()
-            ->when(filled($attribute->validation_rules), fn (TextInput $component) => $component->rules($attribute->validation_rules))
+            ->rules($attribute->validation_rules ?? [])
             ->required((bool) $attribute->required)
             ->helperText(null);
 
@@ -32,20 +31,5 @@ class Number extends BaseFieldType
         }
 
         return $input;
-    }
-
-    public static function getConfigurationFields(): array
-    {
-        return [
-            Grid::make(2)->schema([
-                TextInput::make('min')
-                    ->label(
-                        __('lunar-filament::fieldtypes.number.form.min.label')
-                    )->nullable()->numeric(),
-                TextInput::make('max')->label(
-                    __('lunar-filament::fieldtypes.number.form.max.label')
-                )->nullable()->numeric(),
-            ]),
-        ];
     }
 }

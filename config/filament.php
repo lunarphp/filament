@@ -49,14 +49,53 @@ return [
     |--------------------------------------------------------------------------
     |
     | Bridge tables and widgets link to per-record management pages owned by
-    | whichever panel is consuming them. Each entry is a Filament resource or
-    | page class string. The bridge calls `{class}::getUrl(['record' => $record])`
-    | when present; an empty string disables the link. The `lunarphp/admin`
-    | shell overrides these defaults at boot.
+    | whichever panel is consuming them. Each entry is a Filament page class
+    | string, called as `{class}::getUrl(['record' => $record])`, or a
+    | `[Resource::class, 'page']` pair, called as
+    | `{resource}::getUrl('page', ['record' => $record])`. A callable receiving
+    | ($record, $context) is also accepted, but closures do not survive
+    | `config:cache`. Null disables the link. The `lunarphp/admin` shell
+    | overrides these defaults at boot.
     |
     */
     'record_urls' => [
         'order' => null,
         'product_variant' => null,
+        'collection_edit' => null,
     ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Enable Variants
+    |--------------------------------------------------------------------------
+    |
+    | When `true` this will show the Variants manager when editing a product. If your
+    | storefront doesn't support variants, set this to false.
+    |
+    */
+    'enable_variants' => true,
+
+    /*
+    |--------------------------------------------------------------------------
+    | PDF Streaming
+    |--------------------------------------------------------------------------
+    |
+    | When handling PDF's when browsing the resource, you can decide whether to stream the
+    | PDF in a new tab or download the PDF to your hard drive.
+    |
+    | Available options are 'download' or 'stream'
+    |
+    */
+    'pdf_rendering' => 'download',
+
+    /*
+    |--------------------------------------------------------------------------
+    | Enable Scout when searching on supported models.
+    |--------------------------------------------------------------------------
+    |
+    | Some models in the core have Scout implemented as a search driver, if you
+    | want to use Scout when possible when searching, enable it here.
+    |
+    */
+    'scout_enabled' => false,
 ];
